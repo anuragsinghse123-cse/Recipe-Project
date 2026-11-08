@@ -5,18 +5,26 @@ import  RecipeCard from '../components/RecipeCard.jsx';
 function Home() {
   const [recipes, setRecipes] = useState([]);
   const [total,setTotal] = useState(0);
-  async function fetchRecipes(skipCount) {
+  const [loading,setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState("");
+  const [searchQuery,setSearchQuery] = useState("")
+
+
+  async function fetchRecipes(skipCount,query) {
     try{
-    const {data }= await axios.get(`https://dummyjson.com/recipes?limit=6&skip=${skipCount}`);
-    console.log(data);
-    setRecipes((prev)=>[...prev,...data.recipes]);
+      let url = `https://dummyjson.com/recipes?limit=6&skip=${skipCount}`
+      if(query){
+        url = `https://dummyjson.com/recipes/search?q=${query}`
+      }
+    const {data }= await axios.get(url);
+    setRecipes((prev)=>skipCount==0? data.recipes:[...prev,...data.recipes]);
     setTotal(data.total);
     }
 
     catch(error){
-    console.log(error)
+      setErrorMsg("Please try later!");
     }
-
+    setLoading(false);
   }
   
   useEffect(()=>{
@@ -24,22 +32,42 @@ function Home() {
   },
   []);
 
+  function handleSearch(e){
+    e.preventDefault();
+    const form = new FormData(e.target);
+    let query = form.get("query").trim();
+    setSearchQuery(query);
 
+      fetchRecipes(0,query);
+  }
+
+  if (errorMsg) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <p className="text-accent text-center">{errorMsg}</p>
+      </main>
+    );
+  }
+  
   return (
 
     <main className="max-w-6xl mx-auto px-4 py-8">
       {}
-      <form className="flex gap-2 max-w-md mx-auto mb-8">
+      <form className="flex gap-2 max-w-md mx-auto mb-8"
+      onSubmit={handleSearch}
+      >
         <input
           type="text"
+          name = "query"
           placeholder="Search recipes..."
           className="flex-1 border border-border rounded px-3 py-2 bg-card text-text outline-none focus:border-accent"
         />
-        <button type="button" className="bg-accent hover:bg-accent-hover text-white rounded px-4 py-2 font-medium">
+        <button type="submit" className="bg-accent hover:bg-accent-hover text-white rounded px-4 py-2 font-medium">
           Search
         </button>
       </form>
-
+      {loading && <p className="text-center">Loading...</p>}
+      {!loading && recipes.length ===0 && (<p className="text-center text-muted">No recipes found for "{searchQuery}"</p>)}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {recipes.map((recipe) => (

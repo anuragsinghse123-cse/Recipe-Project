@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { Link } from 'react-router';
 function NotFound() {
   return (
     <main className="max-w-6xl mx-auto px-4 py-16 text-center">
